@@ -501,7 +501,7 @@ function App() {
                   <h4 className="vct-group-title">⚡ Select Partnered Team Capsule</h4>
                   
                   {/* Search Team */}
-                  <div style={{position: 'relative', minWidth: '180px'}}>
+                  <div className="vct-team-search-wrap">
                     <Search size={15} style={{position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)'}} />
                     <input 
                       type="text"
@@ -728,7 +728,7 @@ function App() {
                   <span className="cost-label">Target VP</span>
                   <span className="cost-value highlight">{selectedSkin.cost.toLocaleString()} VP</span>
                 </div>
-                <div className="cost-box" style={{textAlign: 'right'}}>
+                <div className="cost-box cost-box-right">
                   <span className="cost-label">Estimated Cash</span>
                   <span className="cost-value text-glow">
                     {formatCurrency(calculationResult.convertedTotal, payCurrency)}
