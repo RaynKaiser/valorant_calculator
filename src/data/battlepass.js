@@ -23,7 +23,7 @@ export const battlepassCollections = [
   // Episode 9
   'Bubble Pop', 'Bumble Brigade', 'Convergence', 'Overlay', 'Frequency', 'Yoonseul', 'Torque', 'Bulletbox', 'Nanobreak',
   // Episode 10 & Recent
-  'Hieroscape', 'Moon Scout', 'Interhelm', 'Popmonz', 'Doom Wing', 'Insidious', 'Keepsake', 'Keys to Elysium',
+  'Hieroscape', 'Moon Scout', 'Interhelm', 'Doom Wing', 'Insidious', 'Keepsake', 'Keys to Elysium',
   'Heartbreaker', 'Heartseeker', 'Nanomight', 'SilkLeaf', 'Refractrix', 'Paceline', 'Crash Out', 'Storm Maw', 'Datalink',
   'ATLAS // CMD', 'Belaflaire', 'Byteshift', 'Combat Crafts', 'Dragon Gate', 'Haloform', 'Headbanger', 'Intertwine', 'Jellybeam', 'Kaleidoscope',
   'Monstro'

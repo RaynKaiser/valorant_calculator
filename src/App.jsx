@@ -1,15 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Search, ChevronDown, Coins, Calculator, AlertCircle, 
-  Sparkles, Trophy, Shield, Tag, Copy, Check, Filter, X 
+  Sparkles, Trophy, Shield, Tag, Copy, Check, Filter, X,
+  Film, Play, Eye
 } from 'lucide-react';
 import { regions } from './data/regions';
 import { exchangeRatesToUSD, formatCurrency, convertCurrency } from './data/currencies';
 import { tierCosts, getSkinCost } from './data/tiers';
 import { isBattlepassSkin } from './data/battlepass';
 import { vctSpecialBundles, vctTeamsList, getTeamCapsuleBundle } from './data/vctBundles';
+import { activeStoreBundles } from './data/storeBundles';
 import { calculateBestVPPacks } from './utils/vpCalculator';
 import { ValXLogo } from './components/ValXLogo';
+import { WeaponPreviewModal } from './components/WeaponPreviewModal';
 import './index.css';
 
 const CustomSelect = ({ id, value, onChange, options, placeholder = 'Select...' }) => {
@@ -63,6 +66,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedSkin, setSelectedSkin] = useState(null);
+  const [inspectedSkin, setInspectedSkin] = useState(null);
   const [accountRegion, setAccountRegion] = useState('NA');
   const [payCurrency, setPayCurrency] = useState('USD');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -106,7 +110,23 @@ function App() {
               tierName: tierData.name,
               tierColor: tierData.color,
               tierBadgeClass: tierData.badgeClass,
-              cost: cost
+              cost: cost,
+              levels: (skin.levels || []).map((lvl, index) => ({
+                uuid: lvl.uuid,
+                name: lvl.displayName || `Level ${index + 1}`,
+                item: lvl.levelItem,
+                icon: lvl.displayIcon,
+                video: lvl.streamedVideo || null
+              })),
+              chromas: (skin.chromas || []).map((chr, index) => ({
+                uuid: chr.uuid,
+                name: (chr.displayName || (index === 0 ? skin.displayName : `Variant ${index}`)).replace(/[\r\n]+/g, ' ').trim(),
+                icon: chr.displayIcon,
+                fullRender: chr.fullRender || chr.displayIcon,
+                swatch: chr.swatchIcon,
+                video: chr.streamedVideo || null
+              })),
+              hasVideo: (skin.levels || []).some(l => l.streamedVideo) || (skin.chromas || []).some(c => c.streamedVideo)
             });
           });
         });
@@ -141,7 +161,23 @@ function App() {
                 tierName: tierData.name,
                 tierColor: tierData.color,
                 tierBadgeClass: tierData.badgeClass,
-                cost: cost
+                cost: cost,
+                levels: (skin.levels || []).map((lvl, index) => ({
+                  uuid: lvl.uuid,
+                  name: lvl.displayName || `Level ${index + 1}`,
+                  item: lvl.levelItem,
+                  icon: lvl.displayIcon,
+                  video: lvl.streamedVideo || null
+                })),
+                chromas: (skin.chromas || []).map((chr, index) => ({
+                  uuid: chr.uuid,
+                  name: (chr.displayName || (index === 0 ? skin.displayName : `Variant ${index}`)).replace(/[\r\n]+/g, ' ').trim(),
+                  icon: chr.displayIcon,
+                  fullRender: chr.fullRender || chr.displayIcon,
+                  swatch: chr.swatchIcon,
+                  video: chr.streamedVideo || null
+                })),
+                hasVideo: (skin.levels || []).some(l => l.streamedVideo) || (skin.chromas || []).some(c => c.streamedVideo)
               };
             })
             .sort((a, b) => a.name.localeCompare(b.name));
@@ -180,16 +216,32 @@ function App() {
     }
 
     if (search.trim()) {
-      const lower = search.toLowerCase();
+      let lower = search.toLowerCase();
+      // Handle common typo 'pomonz' -> 'popmonz'
+      if (lower.includes('pomon')) {
+        lower = lower.replace(/pomon/g, 'popmon');
+      }
       result = result.filter(s => s.name.toLowerCase().includes(lower));
     }
 
     return result.slice(0, 60);
   }, [search, skins, weaponFilter]);
 
+  // Matching Store Bundles for search (e.g. Popmonz Bundle)
+  const matchingStoreBundles = useMemo(() => {
+    if (!search.trim()) return [];
+    let lower = search.toLowerCase();
+    return activeStoreBundles.filter(b => 
+      b.name.toLowerCase().includes(lower) || 
+      b.searchAliases?.some(alias => alias.includes(lower) || lower.includes(alias)) ||
+      (lower.includes('bundle') && b.name.toLowerCase().includes('bundle'))
+    );
+  }, [search]);
+
   // Purchasable Standard Bundle Options (active bundles only - expired limited bundles removed)
   const bundleOptions = [
     { value: '', label: 'Select a purchasable bundle tier...' },
+    { value: 8700, label: '✨ Popmonz Bundle (8,700 VP) - Featured Store' },
     { value: 2340, label: '⚡ VCT Team Capsule (2,340 VP)' },
     { value: 3400, label: 'Select Edition Bundle (3,400 VP)' },
     { value: 5100, label: 'Deluxe Edition Bundle (5,100 VP)' },
@@ -202,6 +254,22 @@ function App() {
   const handleSkinSelect = (skin) => {
     setSelectedSkin(skin);
     setSearch(skin.name);
+    setIsDropdownOpen(false);
+  };
+
+  const handleStoreBundleSelect = (bundle) => {
+    setSelectedSkin({
+      name: bundle.name,
+      cost: bundle.cost,
+      tierName: bundle.tierName || 'Exclusive',
+      tierBadgeClass: bundle.tierBadgeClass || 'tier-exclusive',
+      tierColor: bundle.tierColor,
+      icon: bundle.verticalIcon || bundle.icon,
+      isBundle: true,
+      tag: bundle.tag,
+      items: bundle.weapons ? bundle.weapons.map(w => w.name).concat(bundle.accessories || []) : []
+    });
+    setSearch(bundle.name);
     setIsDropdownOpen(false);
   };
 
@@ -283,9 +351,9 @@ function App() {
 
   // Popular quick-pick skins for instant selection (all 100% purchasable store rotation skins)
   const popularSkins = [
-    'Kuronami Vandal', 'Reaver Vandal', 'Prime Vandal', 
+    'Popmonz Phantom', 'Kuronami Vandal', 'Reaver Vandal', 'Prime Vandal', 
     'Mystbloom Phantom', 'Nocturnum Scythe', 'Evori Dreamwings Vandal',
-    'Doombringer Sheriff', 'Glitchpop Phantom'
+    'Doombringer Sheriff'
   ];
 
   // Filtered VCT teams
@@ -407,6 +475,29 @@ function App() {
                   
                   {isDropdownOpen && !loading && (
                     <div className="dropdown-list">
+                      {/* Matching Featured Store Bundles */}
+                      {matchingStoreBundles.length > 0 && matchingStoreBundles.map(bundle => (
+                        <div 
+                          key={bundle.id}
+                          className={`dropdown-item ${selectedSkin?.name === bundle.name ? 'selected' : ''}`}
+                          onClick={() => handleStoreBundleSelect(bundle)}
+                        >
+                          <img src={bundle.icon} alt={bundle.name} className="skin-thumb" />
+                          <div className="skin-info">
+                            <div className="skin-name-row">
+                              <span className="skin-name">{bundle.name}</span>
+                              <span className="special-tag-pill" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
+                                FEATURED BUNDLE
+                              </span>
+                            </div>
+                            <div className="skin-sub-info">
+                              <span className={`tier-tag ${bundle.tierBadgeClass}`}>{bundle.tierName}</span>
+                              <span className="skin-cost-badge">{bundle.cost.toLocaleString()} VP</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
                       {filteredSkins.length > 0 ? (
                         filteredSkins.map(skin => (
                           <div 
@@ -420,12 +511,32 @@ function App() {
                               <div className="skin-thumb-placeholder"></div>
                             )}
                             <div className="skin-info">
-                              <span className="skin-name">{skin.name}</span>
+                              <div className="skin-name-row">
+                                <span className="skin-name">{skin.name}</span>
+                                {skin.hasVideo && (
+                                  <span className="dropdown-video-pill" title="In-game animations preview available">
+                                    <Film size={11} /> Video
+                                  </span>
+                                )}
+                              </div>
                               <div className="skin-sub-info">
                                 <span className={`tier-tag ${skin.tierBadgeClass}`}>{skin.tierName}</span>
                                 <span className="skin-cost-badge">{skin.cost.toLocaleString()} VP</span>
                               </div>
                             </div>
+                            <button
+                              type="button"
+                              className="dropdown-inspect-btn"
+                              title="Inspect weapon animations & 3D render"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInspectedSkin(skin);
+                                setIsDropdownOpen(false);
+                              }}
+                            >
+                              <Play size={11} fill="currentColor" />
+                              <span>Inspect</span>
+                            </button>
                           </div>
                         ))
                       ) : (
@@ -590,7 +701,64 @@ function App() {
           {/* 3. BUNDLE / CUSTOM MODE */}
           {calcMode === 'bundle' && (
             <div className="mode-content-fade">
-              <div className="form-group">
+              {/* Featured In-Game Store Bundles (Popmonz) */}
+              <div className="featured-bundles-section">
+                <span className="filter-title" style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <Sparkles size={15} color="var(--accent-red)" />
+                  Featured In-Game Store Bundle:
+                </span>
+                
+                {activeStoreBundles.map(bundle => {
+                  const isSelected = selectedSkin?.name === bundle.name;
+                  return (
+                    <div 
+                      key={bundle.id}
+                      className={`featured-store-bundle-card ${isSelected ? 'active-bundle' : ''}`}
+                      onClick={() => handleStoreBundleSelect(bundle)}
+                    >
+                      <div className="bundle-card-top-row">
+                        <div className="bundle-card-img-wrap">
+                          <img src={bundle.verticalIcon || bundle.icon} alt={bundle.name} />
+                          <span className="bundle-status-badge">ACTIVE IN STORE</span>
+                        </div>
+                        <div className="bundle-card-content">
+                          <div className="bundle-card-badges">
+                            <span className={`tier-badge-pill ${bundle.tierBadgeClass}`}>{bundle.tierName} Edition</span>
+                            <span className="bundle-cost-pill">
+                              <Coins size={14} color="var(--accent-red)" />
+                              {bundle.cost.toLocaleString()} VP
+                            </span>
+                          </div>
+                          <h3 className="bundle-card-title">{bundle.name}</h3>
+                          <p className="bundle-card-desc">{bundle.description}</p>
+                          
+                          <div className="bundle-weapons-chips">
+                            {bundle.weapons?.map(w => (
+                              <span key={w.name} className="bundle-weapon-chip">
+                                {w.name.replace('Popmonz ', '')} {w.isFree ? '(FREE)' : `(${w.cost.toLocaleString()} VP)`}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        type="button"
+                        className={`bundle-select-action-btn ${isSelected ? 'selected' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStoreBundleSelect(bundle);
+                        }}
+                      >
+                        {isSelected ? <Check size={16} /> : <Coins size={16} />}
+                        <span>{isSelected ? 'Selected in Calculator' : `Calculate ${bundle.cost.toLocaleString()} VP for ${bundle.name}`}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1.25rem' }}>
                 <label htmlFor="bundle-select">Preset Purchasable Bundle Tier</label>
                 <CustomSelect 
                   id="bundle-select"
@@ -699,10 +867,24 @@ function App() {
         <section className="panel result-panel">
           {selectedSkin && calculationResult ? (
             <div className="result-card">
-              <div className="skin-preview">
+              <div className={`skin-preview ${(selectedSkin.levels || selectedSkin.chromas) ? 'interactive-skin-preview' : ''}`}>
                 {selectedSkin.icon ? (
-                  <div className="skin-preview-img-wrap">
+                  <div 
+                    className="skin-preview-img-wrap"
+                    onClick={() => {
+                      if (selectedSkin.levels || selectedSkin.chromas) {
+                        setInspectedSkin(selectedSkin);
+                      }
+                    }}
+                    title={selectedSkin.levels ? "Click to inspect weapon & animations" : ""}
+                  >
                     <img src={selectedSkin.icon} alt={selectedSkin.name} />
+                    {(selectedSkin.levels || selectedSkin.chromas) && (
+                      <div className="preview-hover-overlay">
+                        <Play size={16} fill="currentColor" />
+                        <span>Click to Inspect Weapon</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="skin-preview-icon-fallback">
@@ -717,19 +899,61 @@ function App() {
                   {selectedSkin.weapon && (
                     <span className="weapon-category-pill">{selectedSkin.weapon}</span>
                   )}
+                  {selectedSkin.hasVideo && (
+                    <span className="video-available-pill">
+                      <Film size={11} /> Animations Included
+                    </span>
+                  )}
                   {selectedSkin.tag && (
                     <span className="special-tag-pill">{selectedSkin.tag}</span>
                   )}
                 </div>
+
+                {/* Bundle Included Items Preview */}
+                {selectedSkin.items && selectedSkin.items.length > 0 && (
+                  <div className="bundle-items-included-wrap">
+                    <span className="bundle-items-title">
+                      <Sparkles size={13} color="var(--accent-red)" />
+                      Items Included in Bundle ({selectedSkin.items.length}):
+                    </span>
+                    <div className="bundle-items-chips-grid">
+                      {selectedSkin.items.map((item, idx) => (
+                        <span key={idx} className="bundle-item-chip">
+                          {typeof item === 'string' ? item : item.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Inspect & Animation Action Button */}
+                {(selectedSkin.levels || selectedSkin.chromas) && (
+                  <button 
+                    type="button"
+                    className="inspect-action-card-btn"
+                    onClick={() => setInspectedSkin(selectedSkin)}
+                    title="Open in-game inspection theater with animations, SFX, and chromas"
+                  >
+                    <Play size={15} fill="currentColor" />
+                    <span>{selectedSkin.hasVideo ? '🎬 Inspect Weapon & Watch Animations' : '🔍 Inspect Weapon & 3D Render'}</span>
+                    {selectedSkin.hasVideo && <span className="action-live-tag">PREVIEW</span>}
+                  </button>
+                )}
               </div>
 
               <div className="cost-summary">
                 <div className="cost-box">
-                  <span className="cost-label">Target VP</span>
+                  <div className="cost-box-head">
+                    <Coins size={15} color="var(--accent-red)" />
+                    <span className="cost-label">Target VP</span>
+                  </div>
                   <span className="cost-value highlight">{selectedSkin.cost.toLocaleString()} VP</span>
                 </div>
                 <div className="cost-box cost-box-right">
-                  <span className="cost-label">Estimated Cash</span>
+                  <div className="cost-box-head">
+                    <span className="cost-label">Estimated Cash</span>
+                    <span className="cost-currency-chip">{payCurrency}</span>
+                  </div>
                   <span className="cost-value text-glow">
                     {formatCurrency(calculationResult.convertedTotal, payCurrency)}
                   </span>
@@ -815,6 +1039,18 @@ function App() {
       <footer className="valx-footer">
         <p>ValX isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties.</p>
       </footer>
+
+      {/* Weapon Animation & Inspection Modal */}
+      {inspectedSkin && (
+        <WeaponPreviewModal 
+          skin={inspectedSkin}
+          onClose={() => setInspectedSkin(null)}
+          onSelectForCalc={(skin) => handleSkinSelect(skin)}
+          isSelectedForCalc={selectedSkin?.uuid === inspectedSkin?.uuid}
+          accountRegion={accountRegion}
+          payCurrency={payCurrency}
+        />
+      )}
     </div>
   );
 }
