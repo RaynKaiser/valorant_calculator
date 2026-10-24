@@ -1,7 +1,7 @@
 export const regions = {
   NA: {
     id: 'NA',
-    name: 'North America (USD)',
+    name: 'United States (USD)',
     currencyCode: 'USD',
     packs: [
       { vp: 475, cost: 4.99 },
@@ -40,7 +40,7 @@ export const regions = {
   },
   AP: {
     id: 'AP',
-    name: 'Singapore / Asia Pacific (SGD)',
+    name: 'Singapore (SGD)',
     currencyCode: 'SGD',
     packs: [
       { vp: 475, cost: 6.98 },

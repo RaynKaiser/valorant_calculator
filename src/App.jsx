@@ -242,7 +242,7 @@ function App() {
   const bundleOptions = [
     { value: '', label: 'Select a purchasable bundle tier...' },
     { value: 8700, label: '✨ Popmonz Bundle (8,700 VP) - Featured Store' },
-    { value: 2340, label: '⚡ VCT Team Capsule (2,340 VP)' },
+    { value: 2340, label: '⚡ VCT 2026 Team Capsule (2,340 VP)' },
     { value: 3400, label: 'Select Edition Bundle (3,400 VP)' },
     { value: 5100, label: 'Deluxe Edition Bundle (5,100 VP)' },
     { value: 7100, label: 'Premium Edition Bundle (7,100 VP)' },
@@ -576,9 +576,9 @@ function App() {
             <div className="mode-content-fade vct-section">
               <div className="vct-intro-card">
                 <div className="vct-intro-left">
-                  <div className="vct-glow-badge">VALORANT ESPORTS STORE</div>
-                  <h3>Official VCT Team Capsules (2,340 VP)</h3>
-                  <p>Support partnered esports teams directly. Includes Classic skin, AR Player Card, Buddy, and Animated Spray.</p>
+                  <div className="vct-glow-badge">VALORANT ESPORTS STORE • VCT 2026</div>
+                  <h3>Official VCT 2026 Team Capsules (2,340 VP)</h3>
+                  <p>Support partnered esports teams in the 2026 season. Includes team Classic skin, AR Player Card, Buddy, and Animated Spray.</p>
                 </div>
                 <Trophy size={36} className="vct-intro-icon" />
               </div>

@@ -271,6 +271,7 @@ export const WeaponPreviewModal = ({
         {/* Modal Header */}
         <div className="weapon-modal-header">
           <div className="weapon-modal-title-group">
+            <h2 className="weapon-modal-name">{skin.name}</h2>
             <div className="weapon-modal-badges">
               <span className={`tier-badge-pill ${skin.tierBadgeClass || 'tier-select'}`}>
                 {skin.tierName}
@@ -278,21 +279,21 @@ export const WeaponPreviewModal = ({
               <span className="weapon-category-pill">
                 {skin.weapon || (skin.isMelee ? 'Melee' : 'Gun')}
               </span>
-              {skin.isMelee && <span className="melee-pill">Melee Weapon</span>}
+              {skin.isMelee && <span className="melee-pill">Melee</span>}
               {hasAnyVideo && (
                 <span className="video-badge-pill">
                   <Film size={12} style={{ marginRight: 4 }} />
-                  In-Game Animations Included
+                  <span className="badge-desktop-text">In-Game Animations Included</span>
+                  <span className="badge-mobile-text">Animations</span>
                 </span>
               )}
             </div>
-            <h2 className="weapon-modal-name">{skin.name}</h2>
           </div>
 
           <div className="weapon-modal-header-actions">
             {/* Redesigned High-End Header Cost Display */}
             <div className="weapon-cost-display">
-              <Coins size={16} className="header-vp-coin" />
+              <Coins size={15} className="header-vp-coin" />
               <span className="vp-amount">{skin.cost.toLocaleString()} VP</span>
             </div>
             <button 
@@ -353,8 +354,9 @@ export const WeaponPreviewModal = ({
                       }}
                       title="Unmute to hear gunshots, animations & finisher"
                     >
-                      <Volume2 size={16} />
-                      <span>Unmute Sound FX & Music</span>
+                      <Volume2 size={15} />
+                      <span className="unmute-desktop-text">Unmute Sound FX & Music</span>
+                      <span className="unmute-mobile-text">Unmute SFX</span>
                       <div className="audio-wave-anim">
                         <span></span><span></span><span></span><span></span>
                       </div>
@@ -363,10 +365,12 @@ export const WeaponPreviewModal = ({
 
                   {/* Level Tag Overlay */}
                   <div className="video-level-overlay-tag">
-                    <Sparkles size={13} color="var(--accent-red)" />
+                    <Sparkles size={12} color="var(--accent-red)" />
                     <span>
                       {currentLevel?.name || `Level ${selectedLevelIdx + 1}`}
-                      {currentLevel?.item && ` — ${getLevelItemDescription(currentLevel.item)}`}
+                      {currentLevel?.item && (
+                        <span className="level-item-desc"> — {getLevelItemDescription(currentLevel.item)}</span>
+                      )}
                     </span>
                   </div>
                 </div>
